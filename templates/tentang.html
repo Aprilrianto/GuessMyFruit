@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kredit Tim - GuessMyFruit</title>
+  <style>
+    :root {
+      --kuning: #facc15;
+      --kuning-tua: #eab308;
+      --putih: #ffffff;
+      --abu: #f9fafb;
+      --teks: #222;
+      --bayangan: rgba(0, 0, 0, 0.1);
+    }
+    body { font-family: "Segoe UI", sans-serif; margin: 0; background: var(--abu); color: var(--teks); }
+    header {
+      background: var(--kuning); box-shadow: 0 2px 6px var(--bayangan);
+      padding: 12px 25px; display: flex; justify-content: space-between;
+      align-items: center; position: sticky; top: 0; z-index: 10;
+    }
+    .logo { font-weight: bold; font-size: 22px; display: flex; align-items: center; gap: 8px; }
+    nav a { color: #333; text-decoration: none; margin: 0 10px; font-weight: 500; transition: 0.3s; }
+    nav a:hover { text-decoration: underline; }
+
+    section { max-width: 1100px; margin: 60px auto; padding: 0 20px; }
+    section h2 { text-align: center; font-size: 28px; font-weight: 800; margin-bottom: 20px; }
+    section p { text-align: center; color: #555; max-width: 800px; margin: 0 auto 30px; line-height: 1.6; }
+
+    .team-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    .team-card {
+      background: var(--putih); border-radius: 15px; padding: 25px; text-align: center;
+      box-shadow: 0 4px 10px var(--bayangan); transition: transform 0.3s;
+    }
+    .team-card:hover { transform: translateY(-5px); }
+    .team-photo {
+      width: 120px; height: 120px; border-radius: 50%; object-fit: cover;
+      margin-bottom: 15px; box-shadow: 0 2px 5px var(--bayangan);
+    }
+    .team-name { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
+    .team-role { font-size: 14px; color: #777; }
+
+    footer {
+      background: var(--putih); text-align: center; padding: 20px;
+      font-size: 14px; color: #555; border-top: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">🍌 GuessMyFruit</div>
+    <nav>
+      <a href="{{ url_for('upload_file') }}">Home</a>
+      <a href="#">Tentang</a> <!-- Tetap di sini, karena ini halaman kredit -->
+      <a href="index.html#teknologi">Teknologi</a>
+      <a href="index.html#klasifikasi">Klasifikasi</a>
+    </nav>
+  </header>
+
+  <section>
+    <h2>Kredit Tim Pengembang</h2>
+    <p>Berikut adalah anggota tim yang mengembangkan GuessMyFruit. 1 Front-end dan 4 Back-end.</p>
+    <div class="team-cards">
+      <div class="team-card">
+        <img class="team-photo" src="static/uploads/team/isan.jpg" alt="Foto Anggota 1">
+        <div class="team-name">Abdillah Ichsan</div>
+        <div class="team-role">Front-End Developer</div>
+      </div>
+      <div class="team-card">
+        <img class="team-photo" src="static/uploads/team/april.jpg" alt="Foto Anggota 2">
+        <div class="team-name">Aprilrianto Dirhamdan P</div>
+        <div class="team-role">Back-End Developer</div>
+      </div>
+      <div class="team-card">
+        <img class="team-photo" src="static/uploads/team/safi.jpg" alt="Foto Anggota 3">
+        <div class="team-name">Galuh Wisma S</div>
+        <div class="team-role">Back-End Developer</div>
+      </div>
+      <div class="team-card">
+        <img class="team-photo" src="static/uploads/team/aan.jpg" alt="Foto Anggota 4">
+        <div class="team-name">Miftakhu Subkhan</div>
+        <div class="team-role">Back-End Developer</div>
+      </div>
+      <div class="team-card">
+        <img class="team-photo" src="static/uploads/team/afifah.jpg" alt="Foto Anggota 5">
+        <div class="team-name">Afifah Mutmainah</div>
+        <div class="team-role">Back-End Developer</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>© 2025 GuessMyFruit — Sistem klasifikasi buah dengan teknologi AI (CNN + Gemini)</footer>
+</body>
+</html>

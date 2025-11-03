@@ -15,9 +15,10 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropou
 BASE_DIR = os.path.dirname(os.path.abspath(__file__)) 
 ROOT_DIR = os.path.dirname(BASE_DIR)
 
+# Path Model dan Label harus sinkron dengan yang disimpan oleh train.py
 MODEL_PATH = os.path.join(ROOT_DIR, 'models', 'fruit_veg_cnn_model.h5')
 LABELS_PATH = os.path.join(ROOT_DIR, 'models', 'class_labels.txt')
-UPLOAD_FOLDER = os.path.join(ROOT_DIR, 'static', 'uploads')
+UPLOAD_FOLDER = os.path.join(ROOT_DIR, 'static', 'uploads') 
 
 # --- BAGIAN 1: KONFIGURASI GLOBAL ---
 IMAGE_SIZE = (128, 128)
@@ -36,8 +37,8 @@ def build_cnn_model(input_shape, num_classes):
         MaxPooling2D((2, 2)),
         Flatten(),
         Dense(512, activation='relu'),
-        Dropout(0.5),
-        Dense(num_classes, activation='softmax')
+        Dropout(0.5), 
+        Dense(num_classes, activation='softmax') 
     ])
     return model
 
@@ -57,7 +58,8 @@ try:
     
     # 1. Muat Model
     cnn_model = tf.keras.models.load_model(MODEL_PATH)
-
+    
+    # 2. Muat Label Kelas secara Dinamis
     with open(LABELS_PATH, 'r') as f:
         CLASS_LABELS = [line.strip() for line in f]
 
@@ -83,6 +85,7 @@ def get_llm_info_gemini(fruit_veg_name):
 
     # Menyetel kunci secara eksplisit untuk Python sesi ini
     os.environ['GEMINI_API_KEY'] = YOUR_GEMINI_API_KEY
+
     try:
         client = genai.Client() 
         prompt = (f"Berikan rangkuman manfaat kesehatan dan 3 vitamin terpenting dari **{fruit_veg_name}**. "
@@ -97,72 +100,86 @@ def get_llm_info_gemini(fruit_veg_name):
     except APIError as e:
         return f"[LLM API ERROR] Kesalahan API Gemini: {e}"
     except Exception as e:
-        return f"[LLM ERROR] {e}"
+        return f"[LLM ERROR] Kesalahan umum: {e}"
+
 
 def predict_and_analyze(img_path):
+    """Melakukan prediksi CNN dan analisis LLM."""
     if cnn_model is None or not CLASS_LABELS:
-        return None, None, None, "Model atau Label belum dimuat."
+        return None, None, None, "Model atau Label belum dimuat. Pastikan train.py sudah dijalankan!"
 
     try:
+        # 1. Preprocessing CNN
+        print(f"\n[DEBUG] 1. Memuat dan mengolah gambar: {img_path}")
         img = image.load_img(img_path, target_size=IMAGE_SIZE)
         img_array = image.img_to_array(img)
-        img_array = np.expand_dims(img_array, axis=0) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
+        img_array /= 255.0 
+
+        # 2. Prediksi CNN
+        print(" [DEBUG] 2. Memulai prediksi CNN...")
         predictions = cnn_model.predict(img_array, verbose=0)
-        idx = np.argmax(predictions[0])
-        confidence = f"{predictions[0][idx] * 100:.2f}"
-        label = CLASS_LABELS[idx]
-        llm_response = get_llm_info_gemini(label)
-        return label, confidence, llm_response, None
+        predicted_index = np.argmax(predictions[0])
+        confidence = predictions[0][predicted_index]
+        predicted_label = CLASS_LABELS[predicted_index]
+        
+        confidence_percent = f"{confidence*100:.2f}"
+
+        # 3. Analisis LLM
+        print(f" [DEBUG] 3. Memulai panggilan Gemini untuk {predicted_label}...")
+        llm_response = get_llm_info_gemini(predicted_label)
+        
+        print(f" [DEBUG] 4. Analisis selesai.")
+        
+        return predicted_label, confidence_percent, llm_response, None
+
     except Exception as e:
-        return None, None, None, f"Kesalahan prediksi: {e}"
+        print(f" [DEBUG] ERROR PRED/LLM: {e}")
+        return None, None, None, f"Terjadi kesalahan saat klasifikasi: {e}"
+
 
 # --- BAGIAN 5: RUTE FLASK (Antarmuka Web) ---
+
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
 
     if request.method == 'POST':
         if 'file' not in request.files:
             return render_template('index.html', error='Tidak ada file di request.')
-
+        
         file = request.files['file']
+        
         if file.filename == '':
             return render_template('index.html', error='Tidak ada file yang dipilih.')
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-
-            # bersihkan folder lama tanpa ganggu permission
+            
+            # Hapus file lama di folder uploads
             for f in os.listdir(app.config['UPLOAD_FOLDER']):
-                try:
-                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], f))
-                except Exception:
-                    pass
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'], f))
 
-            # Simpan file baru
             file.save(filepath)
 
+            # Lakukan prediksi dan analisis
             prediction, confidence, llm_response, error = predict_and_analyze(filepath)
-            return render_template('index.html',
-                                   filename=filename,
-                                   prediction=prediction,
-                                   confidence=confidence,
+            
+            return render_template('index.html', 
+                                   filename=filename, 
+                                   prediction=prediction, 
+                                   confidence=confidence, 
                                    llm_response=llm_response,
                                    error=error)
         else:
             return render_template('index.html', error='Format file tidak diizinkan.')
-
+            
     return render_template('index.html')
 
-
-# --- BAGIAN 6: LAMAN TENTANG ---
-@app.route('/tentang')
-def tentang():
-    return render_template('tentang.html')
-
-
 if __name__ == '__main__':
-    print("\n[INFO] Jalankan: python src/train.py sebelum ini.")
+    print("\n[INFO] 1. Pastikan folder data_buah/training HANYA berisi folder buah.")
+    print("[INFO] 2. Jalankan 'python src/train.py' DULU sebelum ini.")
     print("Aplikasi web berjalan di http://127.0.0.1:5000")
     app.run(debug=True)
