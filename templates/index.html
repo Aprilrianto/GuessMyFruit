@@ -110,9 +110,9 @@
   </header>
 
   <section class="hero">
-    <div class="hero-text">
+    <div class="hero-text" style="margin-right: 10px;">
       <h1>Sistem Cerdas Klasifikasi Buah</h1>
-      <p>Menggunakan CNN dan LLM (Gemini) untuk mengidentifikasi buah serta memberikan informasi khasiatnya secara real-time.</p>
+      <p style="text-align: justify;">Menggunakan CNN dan LLM (Gemini) untuk mengidentifikasi buah serta memberikan informasi khasiatnya secara real-time.</p>
       <button class="btn" onclick="window.scrollTo({top: document.querySelector('#klasifikasi').offsetTop - 50, behavior: 'smooth'})">Coba Sekarang</button>
     </div>
     <div class="fruit-box">
@@ -162,14 +162,14 @@
       </div>
 
       {% if filename %}
-      <div class="result-section" style="margin-top:30px;">
+      <div class="result-section" style="margin-top:30px; text-align:center;">
         <h3>Hasil Analisis:</h3>
         {% if prediction %}
         <p><b>Prediksi CNN:</b> <span style="color:green">{{ prediction }}</span> (Keyakinan: {{ confidence }}%)</p>
         {% if llm_response %}
         <div class="result-box" style="background:#fffbe6; border-radius:8px; padding:10px; margin-top:10px;">
           <h4>Khasiat & Nutrisi (oleh Gemini):</h4>
-          <p style="white-space: pre-wrap;">{{ llm_response }}</p>
+          <p style="white-space: pre-wrap; text-align: justify;">{{ llm_response }}</p>
         </div>
         {% endif %}
         <div style="text-align:center; margin-top:15px;">
