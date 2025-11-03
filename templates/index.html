@@ -1,112 +1,174 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Klasifikasi Buah (CNN + Gemini)</title>
     <style>
-        /* Gaya CSS Tetap Sama */
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 90%; max-width: 600px; }
-        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-        .upload-section { margin-bottom: 20px; text-align: center; }
-        input[type="file"] { border: 1px solid #ccc; padding: 10px; border-radius: 5px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        input[type="submit"] { background-color: #3498db; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; }
-        input[type="submit"]:hover { background-color: #2980b9; }
-        .result-section { border-top: 1px dashed #ccc; padding-top: 20px; }
-        .result-box { background-color: #ecf0f1; padding: 15px; border-radius: 5px; margin-top: 10px; white-space: pre-wrap; text-align: left; }
-        .image-preview { max-width: 100%; height: auto; margin-top: 15px; border: 1px solid #ddd; padding: 5px; border-radius: 5px; }
-        
-        /* Gaya Loading Spinner */
-        .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none; /* Default tersembunyi */
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .loading-text {
-            color: #3498db;
-            font-weight: bold;
-            display: none; /* Default tersembunyi */
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🍎 Klasifikasi Buah 🥭</h1> <div class="upload-section">
-            <form id="uploadForm" method="post" enctype="multipart/form-data">
-                <input type="file" name="file" accept="image/*" required>
-                <input type="submit" value="Klasifikasi & Analisis" onclick="showLoading()">
-            </form>
-        </div>
-        
-        <div id="loadingIndicator" style="text-align: center;">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Sedang memproses... Harap tunggu sebentar.</div>
-        </div>
-        {% if filename %}
-        <hr>
-        <div class="result-section">
-            <h2 style="text-align: center;">Hasil Analisis:</h2>
-            
-            {% if prediction %}
-                <h3>Prediksi CNN: <span style="color: green;">{{ prediction }}</span> (Keyakinan: {{ confidence }}%)</h3>
-                
-                {% if llm_response %}
-                    <h4>Manfaat & Nutrisi (oleh Gemini):</h4>
-                    <div class="result-box">{{ llm_response }}</div>
-                {% endif %}
-                
-                <p style="text-align: center;">
-                    <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded Image" class="image-preview">
-                </p>
+      /* Gaya CSS Tetap Sama */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+      }
+      .container {
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 90%;
+        max-width: 600px;
+      }
+      h1 {
+        color: #2c3e50;
+        text-align: center;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+      }
+      .upload-section {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      input[type="file"] {
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 5px;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 10px;
+      }
+      input[type="submit"] {
+        background-color: #3498db;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+      }
+      input[type="submit"]:hover {
+        background-color: #2980b9;
+      }
+      .result-section {
+        border-top: 1px dashed #ccc;
+        padding-top: 20px;
+      }
+      .result-box {
+        background-color: #ecf0f1;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 10px;
+        white-space: pre-wrap;
+        text-align: left;
+      }
+      .image-preview {
+        max-width: 100%;
+        height: auto;
+        margin-top: 15px;
+        border: 1px solid #ddd;
+        padding: 5px;
+        border-radius: 5px;
+      }
 
-            {% else %}
-                <p style="color: red;">Gagal memproses gambar atau model belum terlatih.</p>
-            {% endif %}
-        </div>
+      /* Gaya Loading Spinner */
+      .loading-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+        display: none; /* Default tersembunyi */
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .loading-text {
+        color: #3498db;
+        font-weight: bold;
+        display: none; /* Default tersembunyi */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🍎 Klasifikasi Buah 🥭</h1>
+      <div class="upload-section">
+        <form id="uploadForm" method="post" enctype="multipart/form-data">
+          <input type="file" name="file" accept="image/*" required />
+          <input type="submit" value="Klasifikasi & Analisis" onclick="showLoading()" />
+        </form>
+      </div>
+
+      <div id="loadingIndicator" style="text-align: center">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Sedang memproses... Harap tunggu sebentar.</div>
+      </div>
+      {% if filename %}
+      <hr />
+      <div class="result-section">
+        <h2 style="text-align: center">Hasil Analisis:</h2>
+
+        {% if prediction %}
+        <h3>Prediksi CNN: <span style="color: green">{{ prediction }}</span> (Keyakinan: {{ confidence }}%)</h3>
+
+        {% if llm_response %}
+        <h4>Manfaat & Nutrisi (oleh Gemini):</h4>
+        <div class="result-box">{{ llm_response }}</div>
         {% endif %}
-        
-        {% if error %}
-            <div class="result-box" style="color: red; border-color: red;">{{ error }}</div>
+
+        <p style="text-align: center">
+          <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded Image" class="image-preview" />
+        </p>
+
+        {% else %}
+        <p style="color: red">Gagal memproses gambar atau model belum terlatih.</p>
         {% endif %}
+      </div>
+      {% endif %} {% if error %}
+      <div class="result-box" style="color: red; border-color: red">{{ error }}</div>
+      {% endif %}
     </div>
 
     <script>
-        function showLoading() {
-            // Dapatkan input file
-            const fileInput = document.querySelector('input[type="file"]');
-            
-            // Cek apakah ada file yang dipilih
-            if (fileInput.files.length > 0) {
-                // Tampilkan indikator loading dan sembunyikan area hasil sebelumnya
-                document.getElementById('loadingIndicator').style.display = 'block';
-                document.querySelector('.loading-spinner').style.display = 'block';
-                document.querySelector('.loading-text').style.display = 'block';
+      function showLoading() {
+        // Dapatkan input file
+        const fileInput = document.querySelector('input[type="file"]');
 
-                const resultSection = document.querySelector('.result-section');
-                if (resultSection) {
-                    resultSection.style.display = 'none';
-                }
-            }
-            // Setelah loading, Flask akan mengirim respons baru yang akan mengganti seluruh halaman.
+        // Cek apakah ada file yang dipilih
+        if (fileInput.files.length > 0) {
+          // Tampilkan indikator loading dan sembunyikan area hasil sebelumnya
+          document.getElementById("loadingIndicator").style.display = "block";
+          document.querySelector(".loading-spinner").style.display = "block";
+          document.querySelector(".loading-text").style.display = "block";
+
+          const resultSection = document.querySelector(".result-section");
+          if (resultSection) {
+            resultSection.style.display = "none";
+          }
         }
+        // Setelah loading, Flask akan mengirim respons baru yang akan mengganti seluruh halaman.
+      }
 
-        // Sembunyikan loading indicator jika halaman dimuat ulang dengan hasil
-        document.addEventListener('DOMContentLoaded', () => {
-            const resultSection = document.querySelector('.result-section');
-            if (resultSection) {
-                 document.getElementById('loadingIndicator').style.display = 'none';
-            }
-        });
+      // Sembunyikan loading indicator jika halaman dimuat ulang dengan hasil
+      document.addEventListener("DOMContentLoaded", () => {
+        const resultSection = document.querySelector(".result-section");
+        if (resultSection) {
+          document.getElementById("loadingIndicator").style.display = "none";
+        }
+      });
     </script>
-</body>
+  </body>
 </html>
+<!-- tes komen -->
