@@ -1,4 +1,4 @@
-# src/web_app.py - KODE LENGKAP DALAM SATU FILE (Perbaikan Path & Sinkronisasi Buah + Halaman Tentang)
+# src/web_app.py - KODE LENGKAP DALAM SATU FILE (Perbaikan Path & Sinkronisasi Buah)
 
 import os
 import numpy as np
@@ -53,6 +53,7 @@ cnn_model = None
 CLASS_LABELS = []
 try:
     if not os.path.exists(MODEL_PATH) or not os.path.exists(LABELS_PATH):
+        # Pesan error akan menampilkan nama file yang hilang
         raise FileNotFoundError(f"Model ({os.path.basename(MODEL_PATH)}) atau Label ({os.path.basename(LABELS_PATH)}) belum ditemukan. Jalankan train.py dulu.")
     
     # 1. Muat Model
@@ -74,24 +75,33 @@ def allowed_file(filename):
 
 def get_llm_info_gemini(fruit_veg_name):
     """Memanggil Gemini API untuk mendapatkan manfaat dan nutrisi."""
+    
+    # *** LANGKAH ANTI-GAGAL: SISIPKAN KUNCI API ANDA DI BAWAH INI ***
+    # CATATAN: Kunci di bawah ini hanya placeholder.
     YOUR_GEMINI_API_KEY = "AIzaSyArpr6cR1l6VO7EiuYJSZ_PO3jKEm3zn-o" 
+    
     if YOUR_GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE" or not YOUR_GEMINI_API_KEY:
          return "[LLM ERROR] Kunci API belum diganti di web_app.py. Harap segera perbaiki."
+
+    # Menyetel kunci secara eksplisit untuk Python sesi ini
     os.environ['GEMINI_API_KEY'] = YOUR_GEMINI_API_KEY
 
     try:
         client = genai.Client() 
         prompt = (f"Berikan rangkuman manfaat kesehatan dan 3 vitamin terpenting dari **{fruit_veg_name}**. "
                   "Fokus pada nutrisi yang relevan untuk buah-buahan. Gunakan format daftar poin. Jawab dalam Bahasa Indonesia.")
+        
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt
         )
         return response.text
+        
     except APIError as e:
         return f"[LLM API ERROR] Kesalahan API Gemini: {e}"
     except Exception as e:
         return f"[LLM ERROR] Kesalahan umum: {e}"
+
 
 def predict_and_analyze(img_path):
     """Melakukan prediksi CNN dan analisis LLM."""
@@ -100,23 +110,33 @@ def predict_and_analyze(img_path):
 
     try:
         # 1. Preprocessing CNN
+        print(f"\n[DEBUG] 1. Memuat dan mengolah gambar: {img_path}")
         img = image.load_img(img_path, target_size=IMAGE_SIZE)
         img_array = image.img_to_array(img)
         img_array = np.expand_dims(img_array, axis=0)
         img_array /= 255.0 
 
         # 2. Prediksi CNN
+        print(" [DEBUG] 2. Memulai prediksi CNN...")
         predictions = cnn_model.predict(img_array, verbose=0)
         predicted_index = np.argmax(predictions[0])
         confidence = predictions[0][predicted_index]
         predicted_label = CLASS_LABELS[predicted_index]
+        
         confidence_percent = f"{confidence*100:.2f}"
 
         # 3. Analisis LLM
+        print(f" [DEBUG] 3. Memulai panggilan Gemini untuk {predicted_label}...")
         llm_response = get_llm_info_gemini(predicted_label)
+        
+        print(f" [DEBUG] 4. Analisis selesai.")
+        
         return predicted_label, confidence_percent, llm_response, None
+
     except Exception as e:
+        print(f" [DEBUG] ERROR PRED/LLM: {e}")
         return None, None, None, f"Terjadi kesalahan saat klasifikasi: {e}"
+
 
 # --- BAGIAN 5: RUTE FLASK (Antarmuka Web) ---
 
@@ -128,18 +148,25 @@ def upload_file():
     if request.method == 'POST':
         if 'file' not in request.files:
             return render_template('index.html', error='Tidak ada file di request.')
+        
         file = request.files['file']
+        
         if file.filename == '':
             return render_template('index.html', error='Tidak ada file yang dipilih.')
+
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
             # Hapus file lama di folder uploads
             for f in os.listdir(app.config['UPLOAD_FOLDER']):
                 os.remove(os.path.join(app.config['UPLOAD_FOLDER'], f))
+
             file.save(filepath)
+
             # Lakukan prediksi dan analisis
             prediction, confidence, llm_response, error = predict_and_analyze(filepath)
+            
             return render_template('index.html', 
                                    filename=filename, 
                                    prediction=prediction, 
@@ -148,12 +175,8 @@ def upload_file():
                                    error=error)
         else:
             return render_template('index.html', error='Format file tidak diizinkan.')
+            
     return render_template('index.html')
-
-# --- RUTE BARU: Halaman Tentang ---
-@app.route('/tentang')
-def tentang():
-    return render_template('tentang.html')  # pastikan kamu membuat file templates/tentang.html
 
 if __name__ == '__main__':
     print("\n[INFO] 1. Pastikan folder data_buah/training HANYA berisi folder buah.")
