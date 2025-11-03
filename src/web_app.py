@@ -1,4 +1,4 @@
-# src/web_app.py - KODE LENGKAP DALAM SATU FILE (Perbaikan Path & Sinkronisasi Buah)
+# src/web_app.py - KODE LENGKAP DALAM SATU FILE (Perbaikan Final Total)
 
 import os
 import numpy as np
@@ -24,7 +24,7 @@ UPLOAD_FOLDER = os.path.join(ROOT_DIR, 'static', 'uploads')
 IMAGE_SIZE = (128, 128)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
-# --- BAGIAN 2: FUNGSI PEMBANGUN MODEL (hanya untuk referensi) ---
+# --- BAGIAN 2 & 3: FUNGSI PEMBANGUN MODEL & MUAT MODEL ---
 
 def build_cnn_model(input_shape, num_classes):
     """Membangun arsitektur Sequential CNN."""
@@ -42,8 +42,6 @@ def build_cnn_model(input_shape, num_classes):
     ])
     return model
 
-# --- BAGIAN 3: KONFIGURASI FLASK & MUAT MODEL ---
-
 app = Flask(__name__, 
             template_folder=os.path.join(ROOT_DIR, 'templates'),
             static_folder=os.path.join(ROOT_DIR, 'static'))
@@ -53,7 +51,6 @@ cnn_model = None
 CLASS_LABELS = []
 try:
     if not os.path.exists(MODEL_PATH) or not os.path.exists(LABELS_PATH):
-        # Pesan error akan menampilkan nama file yang hilang
         raise FileNotFoundError(f"Model ({os.path.basename(MODEL_PATH)}) atau Label ({os.path.basename(LABELS_PATH)}) belum ditemukan. Jalankan train.py dulu.")
     
     # 1. Muat Model
@@ -68,7 +65,7 @@ try:
 except Exception as e:
     print(f"❌ Gagal memuat model/label. Error: {e}")
 
-# --- BAGIAN 4: FUNGSI UTILITY & LLM GEMINI ---
+# --- BAGIAN 4: FUNGSI UTILITY & LLM GEMINI (Perbaikan Prompt dan Bold) ---
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -77,19 +74,25 @@ def get_llm_info_gemini(fruit_veg_name):
     """Memanggil Gemini API untuk mendapatkan manfaat dan nutrisi."""
     
     # *** LANGKAH ANTI-GAGAL: SISIPKAN KUNCI API ANDA DI BAWAH INI ***
-    # CATATAN: Kunci di bawah ini hanya placeholder.
+    # GANTI placeholder ini dengan kunci Anda yang sebenarnya (sudah disetel di terminal)
     YOUR_GEMINI_API_KEY = "AIzaSyArpr6cR1l6VO7EiuYJSZ_PO3jKEm3zn-o" 
     
     if YOUR_GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE" or not YOUR_GEMINI_API_KEY:
          return "[LLM ERROR] Kunci API belum diganti di web_app.py. Harap segera perbaiki."
 
-    # Menyetel kunci secara eksplisit untuk Python sesi ini
     os.environ['GEMINI_API_KEY'] = YOUR_GEMINI_API_KEY
 
     try:
         client = genai.Client() 
-        prompt = (f"Berikan rangkuman manfaat kesehatan dan 3 vitamin terpenting dari **{fruit_veg_name}**. "
-                  "Fokus pada nutrisi yang relevan untuk buah-buahan. Gunakan format daftar poin. Jawab dalam Bahasa Indonesia.")
+        
+        # PROMPT YANG DIPERBARUI: Meminta asal, manfaat, dan vitamin
+        prompt = (f"Berikan analisis lengkap untuk buah **{fruit_veg_name}**."
+                  "Pastikan Anda menggunakan tanda bintang ganda (**) untuk membuat nama buah menjadi tebal di dalam teks."
+                  "Sertakan bagian-bagian ini:\n"
+                  "1. Ringkasan & Asal Buah (Dari mana buah ini berasal).\n"
+                  "2. Manfaat Utama Kesehatan (Minimal 3 poin).\n"
+                  "3. 3 Vitamin Terpenting.\n"
+                  "Gunakan baris kosong dan daftar poin sederhana (bukan *) untuk memisahkan setiap bagian. Jawab dalam Bahasa Indonesia.")
         
         response = client.models.generate_content(
             model='gemini-2.5-flash',
