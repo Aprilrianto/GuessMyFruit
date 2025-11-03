@@ -1,4 +1,4 @@
-# src/web_app.py - KODE LENGKAP DALAM SATU FILE (Perbaikan Final Total)
+# src/web_app.py - KODE LENGKAP DAN FINAL (Output Bersih)
 
 import os
 import numpy as np
@@ -27,7 +27,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 # --- BAGIAN 2 & 3: FUNGSI PEMBANGUN MODEL & MUAT MODEL ---
 
 def build_cnn_model(input_shape, num_classes):
-    """Membangun arsitektur Sequential CNN."""
+    """Membangun arsitektur Sequential CNN (hanya untuk referensi)."""
     model = Sequential([
         Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
         MaxPooling2D((2, 2)),
@@ -65,16 +65,47 @@ try:
 except Exception as e:
     print(f"❌ Gagal memuat model/label. Error: {e}")
 
-# --- BAGIAN 4: FUNGSI UTILITY & LLM GEMINI (Perbaikan Prompt dan Bold) ---
+# --- BAGIAN 4: FUNGSI UTILITY & LLM GEMINI (Output Cleaning dan Kunci) ---
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def get_llm_info_gemini(fruit_veg_name):
-    """Memanggil Gemini API untuk mendapatkan manfaat dan nutrisi."""
+def clean_llm_output(raw_text):
+    """Membersihkan Markdown dan menjamin struktur paragraf yang rapi."""
     
-    # *** LANGKAH ANTI-GAGAL: SISIPKAN KUNCI API ANDA DI BAWAH INI ***
-    # GANTI placeholder ini dengan kunci Anda yang sebenarnya (sudah disetel di terminal)
+    # 1. Ganti Markdown Bold (**) dengan tag <b> HTML
+    cleaned_text = raw_text.replace('**', '<b>').replace('</b>', '</b>')
+    
+    # 2. Hapus sisa tanda * / - / • (untuk daftar)
+    cleaned_text = cleaned_text.replace('*', '').replace('•', '').replace('-', '').strip()
+    
+    # 3. HAPUS PENOMORAN (1., 2., 3.) AGAR TIDAK MENGGANGGU HTML
+    cleaned_text = cleaned_text.replace('1. ', '').replace('2. ', '').replace('3. ', '').replace('4. ', '').replace('5. ', '')
+    
+    # 4. Ganti Newline GANDA (\n\n) menjadi penutup/pembuka Paragraf HTML
+    cleaned_text = cleaned_text.replace('\r\n\r\n', '</p><p>')
+    cleaned_text = cleaned_text.replace('\n\n', '</p><p>')
+    
+    # 5. Ganti Newline TUNGGAL (\n) dengan <br> (untuk break baris di dalam paragraf/poin)
+    cleaned_text = cleaned_text.replace('\n', '<br>')
+    
+    # 6. Tambahkan tag <p> pembuka dan penutup di awal/akhir
+    if not cleaned_text.startswith('<p>'):
+        cleaned_text = f"<p>{cleaned_text}"
+    if not cleaned_text.endswith('</p>'):
+        cleaned_text = f"{cleaned_text}</p>"
+
+    # 7. Bersihkan tag <br> yang tidak perlu (agar tidak ada spasi vertikal berlebihan)
+    cleaned_text = cleaned_text.replace('<p><br>', '<p>').replace('<br></p>', '</p>')
+    cleaned_text = cleaned_text.replace('<br><br><br>', '<br><br>').replace('<br> <br>', '<br><br>')
+    
+    return cleaned_text
+
+
+def get_llm_info_gemini(fruit_veg_name):
+    """Memanggil Gemini API untuk mendapatkan manfaat, asal, dan vitamin."""
+    
+    # GANTI placeholder ini dengan kunci Anda yang sebenarnya
     YOUR_GEMINI_API_KEY = "AIzaSyArpr6cR1l6VO7EiuYJSZ_PO3jKEm3zn-o" 
     
     if YOUR_GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE" or not YOUR_GEMINI_API_KEY:
@@ -84,14 +115,23 @@ def get_llm_info_gemini(fruit_veg_name):
 
     try:
         client = genai.Client() 
-        prompt = (f"Berikan rangkuman manfaat kesehatan dan 3 vitamin terpenting dari **{fruit_veg_name}**. "
-                  "Fokus pada nutrisi yang relevan untuk buah-buahan. Gunakan format daftar poin. Jawab dalam Bahasa Indonesia.")
+        
+        # PROMPT FINAL YANG DIDESAIN UNTUK OUTPUT TERSTRUKTUR DAN BOLD
+        prompt = (f"Berikan analisis lengkap untuk buah **{fruit_veg_name}**."
+                  "Pastikan Anda menggunakan tanda bintang ganda (**) untuk membuat nama buah menjadi tebal di dalam teks."
+                  "Sertakan bagian-bagian ini:\n"
+                  "1. Ringkasan & Asal Buah (Dari mana buah ini berasal).\n"
+                  "2. Manfaat Utama Kesehatan (Gunakan daftar poin sederhana, tanpa penomoran).\n"
+                  "3. 3 Vitamin Terpenting (Gunakan daftar poin sederhana, tanpa penomoran).\n"
+                  "Jawab dalam Bahasa Indonesia. HINDARI PENGGUNAAN TANDA MARKDOWN DI AWAL BARIS SEPERTI * ATAU -.")
         
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt
         )
-        return response.text
+        
+        # Bersihkan dan kembalikan output
+        return clean_llm_output(response.text)
         
     except APIError as e:
         return f"[LLM API ERROR] Kesalahan API Gemini: {e}"
