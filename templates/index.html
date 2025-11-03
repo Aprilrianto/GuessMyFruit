@@ -1,174 +1,208 @@
 <!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Klasifikasi Buah (CNN + Gemini)</title>
-    <style>
-      /* Gaya CSS Tetap Sama */
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f9;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        margin: 0;
-      }
-      .container {
-        background-color: #ffffff;
-        padding: 30px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        width: 90%;
-        max-width: 600px;
-      }
-      h1 {
-        color: #2c3e50;
-        text-align: center;
-        border-bottom: 2px solid #3498db;
-        padding-bottom: 10px;
-      }
-      .upload-section {
-        margin-bottom: 20px;
-        text-align: center;
-      }
-      input[type="file"] {
-        border: 1px solid #ccc;
-        padding: 10px;
-        border-radius: 5px;
-        width: 100%;
-        box-sizing: border-box;
-        margin-bottom: 10px;
-      }
-      input[type="submit"] {
-        background-color: #3498db;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: background-color 0.3s;
-      }
-      input[type="submit"]:hover {
-        background-color: #2980b9;
-      }
-      .result-section {
-        border-top: 1px dashed #ccc;
-        padding-top: 20px;
-      }
-      .result-box {
-        background-color: #ecf0f1;
-        padding: 15px;
-        border-radius: 5px;
-        margin-top: 10px;
-        white-space: pre-wrap;
-        text-align: left;
-      }
-      .image-preview {
-        max-width: 100%;
-        height: auto;
-        margin-top: 15px;
-        border: 1px solid #ddd;
-        padding: 5px;
-        border-radius: 5px;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GuessMyFruit - Sistem Klasifikasi Buah AI</title>
+  <style>
+    :root {
+      --kuning: #facc15;
+      --kuning-tua: #eab308;
+      --putih: #ffffff;
+      --abu: #f9fafb;
+      --teks: #222;
+      --bayangan: rgba(0, 0, 0, 0.1);
+    }
+    body { font-family: "Segoe UI", sans-serif; margin: 0; background: var(--abu); color: var(--teks); }
+    header {
+      background: var(--kuning); box-shadow: 0 2px 6px var(--bayangan);
+      padding: 12px 25px; display: flex; justify-content: space-between;
+      align-items: center; position: sticky; top: 0; z-index: 10;
+    }
+    .logo { font-weight: bold; font-size: 22px; display: flex; align-items: center; gap: 8px; }
+    nav a { color: #333; text-decoration: none; margin: 0 10px; font-weight: 500; transition: 0.3s; }
+    nav a:hover { text-decoration: underline; }
 
-      /* Gaya Loading Spinner */
-      .loading-spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #3498db;
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        animation: spin 1s linear infinite;
-        margin: 20px auto;
-        display: none; /* Default tersembunyi */
-      }
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-      .loading-text {
-        color: #3498db;
-        font-weight: bold;
-        display: none; /* Default tersembunyi */
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>🍎 Klasifikasi Buah 🥭</h1>
-      <div class="upload-section">
-        <form id="uploadForm" method="post" enctype="multipart/form-data">
-          <input type="file" name="file" accept="image/*" required />
-          <input type="submit" value="Klasifikasi & Analisis" onclick="showLoading()" />
-        </form>
-      </div>
+    .hero { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+      background: var(--putih); border-radius: 20px; padding: 40px; margin: 40px auto;
+      max-width: 1100px; box-shadow: 0 4px 10px var(--bayangan);
+    }
+    .hero-text { flex: 1; min-width: 280px; }
+    .hero-text h1 { font-size: 30px; font-weight: 800; margin-bottom: 10px; }
+    .hero-text p { color: #555; margin-bottom: 20px; }
+    .btn {
+      background: var(--kuning-tua); color: var(--putih); border: none;
+      padding: 10px 20px; border-radius: 8px; cursor: pointer;
+      font-weight: 600; transition: transform 0.2s;
+    }
+    .btn:hover { transform: scale(1.05); background: #ca8a04; }
 
-      <div id="loadingIndicator" style="text-align: center">
+    .fruit-box {
+      background: #fff7cc; border-radius: 15px; padding: 20px;
+      display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;
+    }
+    .fruit { width: 80px; height: 80px; background: var(--putih);
+      border-radius: 15px; display: flex; align-items: center;
+      justify-content: center; font-size: 32px; box-shadow: 0 2px 5px var(--bayangan);
+      transition: 0.3s;
+    }
+    .fruit:hover { transform: scale(1.1) rotate(8deg); }
+
+    section { max-width: 1100px; margin: 60px auto; padding: 0 20px; }
+    section h2 { text-align: center; font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+    section p { text-align: center; color: #555; max-width: 800px; margin: 0 auto 30px; line-height: 1.6; }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .card {
+      background: var(--kuning); border-radius: 15px; padding: 25px; text-align: center;
+      box-shadow: 0 3px 8px var(--bayangan); transition: transform 0.3s;
+    }
+    .card:hover { transform: translateY(-5px); }
+    .icon {
+      width: 60px; height: 60px; background: var(--putih); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 15px; font-size: 24px; box-shadow: 0 2px 5px var(--bayangan);
+    }
+
+    .upload-box {
+      background: var(--putih);
+      border: 2px dashed #ccc;
+      border-radius: 15px;
+      text-align: center;
+      padding: 40px;
+    }
+
+    footer {
+      background: var(--putih); text-align: center; padding: 20px;
+      font-size: 14px; color: #555; border-top: 1px solid #eee;
+    }
+
+    .loading-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--kuning-tua);
+      border-radius: 50%;
+      width: 30px; height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;
+    }
+    @keyframes spin { 0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);} }
+    .loading-text { color: var(--kuning-tua); font-weight: bold; display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">🍎 GuessMyFruit</div>
+    <nav>
+      <a href="#tentang">Tentang</a>
+      <a href="#teknologi">Teknologi</a>
+      <a href="#klasifikasi">Klasifikasi</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Sistem Cerdas Klasifikasi Buah</h1>
+      <p>Menggunakan CNN dan LLM (Gemini) untuk mengidentifikasi buah serta memberikan informasi khasiatnya secara real-time.</p>
+      <button class="btn" onclick="window.scrollTo({top: document.querySelector('#klasifikasi').offsetTop - 50, behavior: 'smooth'})">Coba Sekarang</button>
+    </div>
+    <div class="fruit-box">
+      <div class="fruit">🍎</div><div class="fruit">🍌</div><div class="fruit">🍇</div><div class="fruit">🍒</div><div class="fruit">🍊</div><div class="fruit">🍓</div><div class="fruit">🥭</div><div class="fruit">🍍</div>
+    </div>
+  </section>
+
+  <section id="tentang">
+    <h2>Tentang Sistem Kami</h2>
+    <p>Klasifikasi Buah adalah sistem cerdas yang menggabungkan teknologi Computer Vision dan Large Language Model untuk memberikan hasil dan informasi nutrisi yang komprehensif.</p>
+    <div class="cards">
+      <div class="card"><div class="icon">🎯</div><h3>Akurasi Tinggi</h3><p>Menggunakan model CNN yang dilatih dengan dataset luas.</p></div>
+      <div class="card"><div class="icon">🧠</div><h3>AI Terintegrasi</h3><p>Kombinasi CNN untuk visual dan Gemini (LLM) untuk analisis khasiat buah.</p></div>
+      <div class="card"><div class="icon">⚡</div><h3>Real-Time</h3><p>Proses klasifikasi cepat dan hasil instan dalam hitungan detik.</p></div>
+    </div>
+  </section>
+
+  <section id="teknologi">
+    <h2>Teknologi yang Digunakan</h2>
+    <p>Sistem GuessMyFruit memanfaatkan kombinasi teknologi terkini:</p>
+    <div class="cards">
+      <div class="card"><div class="icon">🧬</div><h3>CNN</h3><p>Mendeteksi jenis buah dari gambar dengan presisi tinggi.</p></div>
+      <div class="card"><div class="icon">🤖</div><h3>Gemini</h3><p>Menjelaskan khasiat dan nutrisi dari buah yang dikenali.</p></div>
+      <div class="card"><div class="icon">🔗</div><h3>RESTful API</h3><p>Menghubungkan model AI dengan sistem Flask untuk pemrosesan cepat.</p></div>
+    </div>
+  </section>
+
+  <section id="klasifikasi">
+    <h2>Klasifikasi Buah</h2>
+    <p>Upload gambar buah untuk melihat hasil prediksi dan informasi khasiatnya.</p>
+
+    <div class="upload-box">
+      <form id="uploadForm" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" id="fileInput" accept="image/*" required style="display:none;">
+        <button type="button" class="btn" id="selectButton">Pilih Gambar</button>
+        <button type="submit" class="btn" id="analyzeButton" onclick="showLoading()" disabled>Upload & Analisis</button>
+      </form>
+
+      <div id="loadingIndicator" style="text-align:center;">
         <div class="loading-spinner"></div>
         <div class="loading-text">Sedang memproses... Harap tunggu sebentar.</div>
       </div>
+
       {% if filename %}
-      <hr />
-      <div class="result-section">
-        <h2 style="text-align: center">Hasil Analisis:</h2>
-
+      <div class="result-section" style="margin-top:30px;">
+        <h3>Hasil Analisis:</h3>
         {% if prediction %}
-        <h3>Prediksi CNN: <span style="color: green">{{ prediction }}</span> (Keyakinan: {{ confidence }}%)</h3>
-
+        <p><b>Prediksi CNN:</b> <span style="color:green">{{ prediction }}</span> (Keyakinan: {{ confidence }}%)</p>
         {% if llm_response %}
-        <h4>Manfaat & Nutrisi (oleh Gemini):</h4>
-        <div class="result-box">{{ llm_response }}</div>
+        <div class="result-box" style="background:#fffbe6; border-radius:8px; padding:10px; margin-top:10px;">
+          <h4>Khasiat & Nutrisi (oleh Gemini):</h4>
+          <p style="white-space: pre-wrap;">{{ llm_response }}</p>
+        </div>
         {% endif %}
-
-        <p style="text-align: center">
-          <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded Image" class="image-preview" />
-        </p>
-
+        <div style="text-align:center; margin-top:15px;">
+          <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Hasil Gambar" style="max-width:200px; border-radius:10px;">
+        </div>
         {% else %}
-        <p style="color: red">Gagal memproses gambar atau model belum terlatih.</p>
+        <p style="color:red;">Gagal memproses gambar atau model belum terlatih.</p>
         {% endif %}
       </div>
-      {% endif %} {% if error %}
-      <div class="result-box" style="color: red; border-color: red">{{ error }}</div>
+      {% endif %}
+
+      {% if error %}
+      <div class="result-box" style="color:red; border:1px solid red; padding:8px; border-radius:5px;">{{ error }}</div>
       {% endif %}
     </div>
+  </section>
 
-    <script>
-      function showLoading() {
-        // Dapatkan input file
-        const fileInput = document.querySelector('input[type="file"]');
+  <footer>© 2025 GuessMyFruit — Sistem klasifikasi buah dengan teknologi AI (CNN + Gemini)</footer>
 
-        // Cek apakah ada file yang dipilih
-        if (fileInput.files.length > 0) {
-          // Tampilkan indikator loading dan sembunyikan area hasil sebelumnya
-          document.getElementById("loadingIndicator").style.display = "block";
-          document.querySelector(".loading-spinner").style.display = "block";
-          document.querySelector(".loading-text").style.display = "block";
+  <script>
+    // Buka file picker saat klik tombol pilih gambar
+    document.getElementById("selectButton").addEventListener("click", function() {
+      document.getElementById("fileInput").click();
+    });
 
-          const resultSection = document.querySelector(".result-section");
-          if (resultSection) {
-            resultSection.style.display = "none";
-          }
-        }
-        // Setelah loading, Flask akan mengirim respons baru yang akan mengganti seluruh halaman.
+    // Aktifkan tombol analisis setelah file dipilih
+    document.getElementById("fileInput").addEventListener("change", function() {
+      if (this.files.length > 0) {
+        document.getElementById("analyzeButton").disabled = false;
       }
+    });
 
-      // Sembunyikan loading indicator jika halaman dimuat ulang dengan hasil
-      document.addEventListener("DOMContentLoaded", () => {
-        const resultSection = document.querySelector(".result-section");
-        if (resultSection) {
-          document.getElementById("loadingIndicator").style.display = "none";
-        }
-      });
-    </script>
-  </body>
+    function showLoading() {
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput.files.length > 0) {
+        document.getElementById("loadingIndicator").style.display = "block";
+        document.querySelector(".loading-spinner").style.display = "block";
+        document.querySelector(".loading-text").style.display = "block";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const resultSection = document.querySelector(".result-section");
+      if (resultSection) {
+        document.getElementById("loadingIndicator").style.display = "none";
+      }
+    });
+  </script>
+</body>
 </html>
-<!-- tes komen -->
