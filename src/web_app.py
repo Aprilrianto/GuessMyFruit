@@ -88,6 +88,7 @@ def get_llm_info_gemini(fruit_veg_name):
 
     try:
         client = genai.Client() 
+        
         prompt = (f"Berikan rangkuman manfaat kesehatan dan 3 vitamin terpenting dari **{fruit_veg_name}**. "
                   "Fokus pada nutrisi yang relevan untuk buah-buahan. Gunakan format daftar poin. Jawab dalam Bahasa Indonesia.")
         
