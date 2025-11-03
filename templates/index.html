@@ -70,6 +70,15 @@
       border-radius: 15px;
       text-align: center;
       padding: 40px;
+      position: relative;
+    }
+
+    #previewContainer img {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      margin-top: 15px;
     }
 
     footer {
@@ -142,6 +151,11 @@
         <button type="submit" class="btn" id="analyzeButton" onclick="showLoading()" disabled>Upload & Analisis</button>
       </form>
 
+      <!-- Preview Gambar -->
+      <div id="previewContainer" style="display:none;">
+        <img id="previewImage" src="" alt="Preview Gambar">
+      </div>
+
       <div id="loadingIndicator" style="text-align:center;">
         <div class="loading-spinner"></div>
         <div class="loading-text">Sedang memproses... Harap tunggu sebentar.</div>
@@ -181,10 +195,25 @@
       document.getElementById("fileInput").click();
     });
 
-    // Aktifkan tombol analisis setelah file dipilih
+    // Aktifkan tombol analisis dan tampilkan preview saat file dipilih
     document.getElementById("fileInput").addEventListener("change", function() {
-      if (this.files.length > 0) {
-        document.getElementById("analyzeButton").disabled = false;
+      const file = this.files[0];
+      const analyzeButton = document.getElementById("analyzeButton");
+      const previewContainer = document.getElementById("previewContainer");
+      const previewImage = document.getElementById("previewImage");
+
+      if (file) {
+        analyzeButton.disabled = false;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImage.src = e.target.result;
+          previewContainer.style.display = "block";
+        }
+        reader.readAsDataURL(file);
+      } else {
+        analyzeButton.disabled = true;
+        previewContainer.style.display = "none";
+        previewImage.src = "";
       }
     });
 
