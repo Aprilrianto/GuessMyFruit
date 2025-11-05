@@ -1,4 +1,6 @@
 Apel
+Apel Braeburn
+Apel Crimson Snow
 Jeruk Bali
 Jeruk Mandarin
 Mangga Apel
