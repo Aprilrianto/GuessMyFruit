@@ -85,7 +85,7 @@ def get_llm_info_gemini(fruit_veg_name):
     os.environ['GEMINI_API_KEY'] = YOUR_GEMINI_API_KEY
     try:
         client = genai.Client() 
-        prompt = (f"Berikan rangkuman manfaat kesehatan dan 3 vitamin terpenting dari **{fruit_veg_name}**. "
+        prompt = (f"Berikan asal usul serta rangkuman manfaat kesehatan dan 3 vitamin terpenting dari **{fruit_veg_name}**. "
                   "Fokus pada nutrisi yang relevan untuk buah-buahan. Gunakan format daftar poin. Jawab dalam Bahasa Indonesia.")
         
         response = client.models.generate_content(
