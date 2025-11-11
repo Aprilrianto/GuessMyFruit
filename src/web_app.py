@@ -92,7 +92,35 @@ def get_llm_info_gemini(fruit_veg_name):
             model='gemini-2.5-flash',
             contents=prompt
         )
-        return response.text
+        
+
+        # 🧽 Bersihkan dan rapikan teks
+        clean_text = response.text \
+            .replace("###", "") \
+            .replace("**", "") \
+            .replace("*", "") \
+            .replace("\n\n", "<br><br>") \
+            .replace("\n", "<br>") \
+            .strip()
+
+        # 💅 Tambahkan styling agar teks rapi rata kanan-kiri
+        html_output = f"""
+        <div style="
+            text-align: justify;
+            text-justify: inter-word;
+            line-height: 1.7;
+            font-size: 16px;
+            color: #333;
+            background-color: #fafafa;
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        ">
+            {clean_text}
+        </div>
+        """
+
+        return html_output
         
     except APIError as e:
         return f"[LLM API ERROR] Kesalahan API Gemini: {e}"
